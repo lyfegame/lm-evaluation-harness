@@ -1,0 +1,43 @@
+task: dolly
+task_alias: dolly
+
+description: |
+  Instruction-following dataset (Dolly 15k; non-plan). Each example provides an
+  instruction and a reference response. This configuration treats the provided
+  JSONL files as train/validation/test splits for evaluation.
+
+tag:
+  - instruction_following
+  - generation
+
+dataset_path: json
+dataset_name: null
+dataset_kwargs:
+  data_files:
+    train: /home/ubuntu/nic-us-west-3/mixplay-data-gen/processed_data/dolly_15k/dolly_train.jsonl
+    validation: /home/ubuntu/nic-us-west-3/mixplay-data-gen/processed_data/dolly_15k/dolly_validation.jsonl
+    test: /home/ubuntu/nic-us-west-3/mixplay-data-gen/processed_data/dolly_15k/dolly_test.jsonl
+
+training_split: train
+validation_split: validation
+test_split: test
+fewshot_split: train
+
+output_type: generate_until
+
+generation_kwargs:
+  until: []
+  max_gen_toks: 512
+  do_sample: true
+  temperature: 1.0
+
+doc_to_text: "{{instruction}}\nResponse:"
+doc_to_target: response
+
+metric_list:
+  - metric: bleu
+
+metadata:
+  version: 0
+
+
