@@ -236,6 +236,10 @@ class OpenAIChatCompletion(LocalChatCompletion):
             eval_logger.warning(
                 "o1 models do not support `stop` and only support temperature=1"
             )
+        if "gpt-5" in kwargs.get("model", ""):
+            eval_logger.warning(
+                "gpt-5 models do not support the `stop` parameter and only support temperature=1"
+            )
 
         super().__init__(
             base_url=base_url,
@@ -294,4 +298,7 @@ class OpenAIChatCompletion(LocalChatCompletion):
             output["temperature"] = 1
         elif "o3" in self.model:
             output.pop("temperature")
+        elif "gpt-5" in self.model:
+            output.pop("stop")
+            output["temperature"] = 1
         return output
