@@ -19,6 +19,12 @@ class SystemPromptTask(ConfigurableTask):
     
     VERSION = 0
     
+    def __init__(self, config=None):
+        """Initialize the task, removing the 'class' field from config if present."""
+        if config and 'class' in config:
+            config = {k: v for k, v in config.items() if k != 'class'}
+        super().__init__(config=config)
+    
     def fewshot_context(
         self,
         doc: dict,

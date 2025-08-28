@@ -2,7 +2,7 @@ task: explore_instruct_plan
 task_alias: explore_instruct_plan
 
 # Use the custom task class that supports per-document system prompts
-class: !function lm_eval.tasks.custom_system_prompt.task.SystemPromptTask
+class: !function task.SystemPromptTask
 
 description: |
   Explore-Instruct Rewriting 32k Plan dataset with per-document system prompt support.
@@ -18,9 +18,9 @@ dataset_path: json
 dataset_name: null
 dataset_kwargs:
   data_files:
-    train: /Users/nic/altera/mixplay-data-gen/processed_data/explore_instruct_plan/Explore_Instruct_Rewriting_32k_plan_train.jsonl
-    validation: /Users/nic/altera/mixplay-data-gen/processed_data/explore_instruct_plan/Explore_Instruct_Rewriting_32k_plan_validation.jsonl
-    test: /Users/nic/altera/mixplay-data-gen/processed_data/explore_instruct_plan/Explore_Instruct_Rewriting_32k_plan_test.jsonl
+    train: processed_data/explore_instruct_plan/Explore_Instruct_Rewriting_32k_plan_train.jsonl
+    validation: processed_data/explore_instruct_plan/Explore_Instruct_Rewriting_32k_plan_validation.jsonl
+    test: processed_data/explore_instruct_plan/Explore_Instruct_Rewriting_32k_plan_test.jsonl
 
 training_split: train
 validation_split: validation
