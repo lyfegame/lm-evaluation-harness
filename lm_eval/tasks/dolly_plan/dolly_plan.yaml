@@ -14,9 +14,9 @@ dataset_path: json
 dataset_name: null
 dataset_kwargs:
   data_files:
-    train: processed_data/dolly_plan_15k/dolly_plan_train.jsonl
-    validation: processed_data/dolly_plan_15k/dolly_plan_validation.jsonl
-    test: processed_data/dolly_plan_15k/dolly_plan_test.jsonl
+    train: processed_data/dolly_plan/dolly_plan_train.jsonl
+    validation: processed_data/dolly_plan/dolly_plan_validation.jsonl
+    test: processed_data/dolly_plan/dolly_plan_test.jsonl
 
 training_split: train
 validation_split: validation

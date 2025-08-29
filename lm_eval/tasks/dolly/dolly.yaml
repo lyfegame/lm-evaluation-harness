@@ -14,9 +14,9 @@ dataset_path: json
 dataset_name: null
 dataset_kwargs:
   data_files:
-    train: /home/ubuntu/nic-2/mixplay-data-gen/processed_data/dolly_15k/dolly_train.jsonl
-    validation: /home/ubuntu/nic-2/mixplay-data-gen/processed_data/dolly_15k/dolly_validation.jsonl
-    test: /home/ubuntu/nic-2/mixplay-data-gen/processed_data/dolly_15k/dolly_test.jsonl
+    train: processed_data/dolly/dolly_train.jsonl
+    validation: processed_data/dolly/dolly_validation.jsonl
+    test: processed_data/dolly/dolly_test.jsonl
 
 training_split: train
 validation_split: validation
