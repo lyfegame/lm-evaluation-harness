@@ -363,8 +363,19 @@ class AnthropicChat(LocalCompletionsAPI):
         if not isinstance(outputs, list):
             outputs = [outputs]
         for out in outputs:
-            for choices in out["content"]:
-                res.append(choices["text"])
+            # Anthropic Messages API returns content as an array of content blocks
+            # Each block has 'type' and 'text' fields for text content
+            if "content" in out and isinstance(out["content"], list):
+                # Concatenate all text blocks in the response
+                text_parts = []
+                for content_block in out["content"]:
+                    if isinstance(content_block, dict) and content_block.get("type") == "text":
+                        text_parts.append(content_block.get("text", ""))
+                res.append("".join(text_parts))
+            else:
+                # Fallback for unexpected response format
+                eval_logger.warning(f"Unexpected response format: {out}")
+                res.append("")
         return res
 
     def tok_encode(
