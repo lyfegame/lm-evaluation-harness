@@ -91,7 +91,22 @@ class GeneralConfigTracker:
         """Logs model parameters and job ID."""
         self.model_source = model_source
         self.model_name = GeneralConfigTracker._get_model_name(model_args)
-        self.model_name_sanitized = sanitize_model_name(self.model_name)
+        # If a reasoning effort is specified in model_args, include it in the
+        # directory-friendly model name so different efforts go to distinct folders.
+        reasoning_effort_value = None
+        reasoning_effort_key = "reasoning_effort="
+        if reasoning_effort_key in model_args:
+            try:
+                reasoning_effort_value = model_args.split(reasoning_effort_key, 1)[1].split(",", 1)[0]
+            except Exception:
+                reasoning_effort_value = None
+
+        effective_model_name = (
+            self.model_name
+            if not reasoning_effort_value
+            else f"{self.model_name}_reasoning_effort_{reasoning_effort_value}"
+        )
+        self.model_name_sanitized = sanitize_model_name(effective_model_name)
         self.system_instruction = system_instruction
         self.system_instruction_sha = (
             hash_string(system_instruction) if system_instruction else None
