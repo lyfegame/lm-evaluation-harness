@@ -45,8 +45,8 @@ def gemini_completion(
         from google.genai import types
     except ImportError:
         raise ImportError(
-            "Please install the Google Generative AI package: "
-            "pip install google-generativeai"
+            "Please install the Google Gen AI package: "
+            "pip install google-genai"
         )
 
     # Build generation config
@@ -137,8 +137,8 @@ class GeminiLM(LM):
             from google import genai
         except ImportError:
             raise ImportError(
-                "Please install the Google Generative AI package: "
-                "pip install google-generativeai"
+                "Please install the Google Gen AI package: "
+                "pip install google-genai"
             )
 
         # Check for API key
@@ -148,7 +148,7 @@ class GeminiLM(LM):
                 "Please set it to your Google AI API key."
             )
 
-        self.client = genai.Client()
+        self.client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
         eval_logger.info(f"Initialized Gemini model: {self.model}")
         if self.thinking_budget:
             eval_logger.info(f"Using thinking budget: {self.thinking_budget}")
