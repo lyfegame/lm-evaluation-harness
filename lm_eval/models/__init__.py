@@ -3,6 +3,7 @@ from . import (
     api_models,
     dummy,
     gguf,
+    google_gemini,
     hf_audiolm,
     hf_steered,
     hf_vlms,
