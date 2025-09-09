@@ -101,11 +101,21 @@ class GeneralConfigTracker:
             except Exception:
                 reasoning_effort_value = None
 
-        effective_model_name = (
-            self.model_name
-            if not reasoning_effort_value
-            else f"{self.model_name}_reasoning_effort_{reasoning_effort_value}"
-        )
+        # Check for output_suffix parameter to customize directory name
+        output_suffix_value = None
+        output_suffix_key = "output_suffix="
+        if output_suffix_key in model_args:
+            try:
+                output_suffix_value = model_args.split(output_suffix_key, 1)[1].split(",", 1)[0]
+            except Exception:
+                output_suffix_value = None
+
+        effective_model_name = self.model_name
+        if reasoning_effort_value:
+            effective_model_name = f"{effective_model_name}_reasoning_effort_{reasoning_effort_value}"
+        if output_suffix_value:
+            effective_model_name = f"{effective_model_name}_{output_suffix_value}"
+        
         self.model_name_sanitized = sanitize_model_name(effective_model_name)
         self.system_instruction = system_instruction
         self.system_instruction_sha = (
