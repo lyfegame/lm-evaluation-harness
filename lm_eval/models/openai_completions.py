@@ -396,6 +396,18 @@ class OpenAIResponses(LocalChatCompletion):
                 input_text = str(messages)
         else:
             input_text = str(messages)
+        # Diagnostic logging for payload
+        try:
+            preview = str(input_text)[:200].replace("\n", "\\n")
+        except Exception:
+            preview = "<non-string>"
+        try:
+            roles = [m.get("role") for m in messages] if isinstance(messages, list) and messages and isinstance(messages[0], dict) else None
+        except Exception:
+            roles = None
+        eval_logger.debug(
+            f"OpenAIResponses payload: model={self.model}, roles={roles}, input_len={len(str(input_text))}, preview='{preview}'"
+        )
             
         # Ensure model is a string, not a dict
         if not isinstance(self.model, str):
@@ -433,38 +445,106 @@ class OpenAIResponses(LocalChatCompletion):
         """
         if not isinstance(outputs, list):
             outputs = [outputs]
-        
+
         res = []
         for output in outputs:
-            # GPT-5 response format: {"output": [{type: "reasoning", ...}, {type: "message", content: [...]}], ...}
+            # Log unexpected shapes first
+            if output is None:
+                eval_logger.warning("OpenAIResponses.parse_generations: received None output (likely request failure after retries)")
+            elif not isinstance(output, dict):
+                type_name = type(output).__name__
+                preview = (str(output)[:200] if isinstance(output, str) else "")
+                eval_logger.warning(f"OpenAIResponses.parse_generations: unexpected non-dict output type={type_name} preview='{preview}'")
+
+            # 1) Top-level convenience fields
+            if isinstance(output, dict) and isinstance(output.get("output_text"), str) and output.get("output_text").strip():
+                res.append(output["output_text"])
+                continue
+            if isinstance(output, dict) and isinstance(output.get("text"), str) and output.get("text").strip():
+                res.append(output["text"])
+                continue
+
+            # 2) Structured output list: often contains reasoning and message blocks
             if isinstance(output, dict) and "output" in output:
                 output_list = output["output"]
-                # Find and extract the message content from the output list
+                extracted = ""
                 for item in output_list:
-                    if isinstance(item, dict) and item.get("type") == "message" and "content" in item:
+                    if not isinstance(item, dict):
+                        continue
+                    itype = item.get("type")
+                    # Primary path: message -> content list
+                    if itype == "message" and "content" in item:
                         content = item["content"]
-                        # Content is a list of objects with type: "output_text"
                         if isinstance(content, list):
+                            texts: List[str] = []
                             for content_item in content:
-                                if isinstance(content_item, dict) and content_item.get("type") == "output_text":
-                                    text = content_item.get("text", "")
-                                    res.append(text)
-                                    break
-                            else:
-                                res.append("")
+                                if isinstance(content_item, dict):
+                                    if content_item.get("type") == "output_text" and isinstance(content_item.get("text"), str):
+                                        extracted = content_item.get("text") or ""
+                                        break
+                                    txt = content_item.get("text")
+                                    if isinstance(txt, str) and txt:
+                                        texts.append(txt)
+                            if not extracted and texts:
+                                extracted = "".join(texts)
+                        elif isinstance(content, str):
+                            extracted = content
                         else:
-                            res.append(str(content))
-                        break
-                else:
-                    res.append("")
-            # Fallback for other response formats
-            elif isinstance(output, dict) and "message" in output:
+                            extracted = str(content)
+                        if extracted:
+                            break
+                    # Alternate: text block directly in output
+                    if itype in ("output_text", "message_text", "assistant_message"):
+                        txt = item.get("text")
+                        if isinstance(txt, str) and txt:
+                            extracted = txt
+                            break
+                if extracted == "":
+                    keys = list(output.keys())
+                    eval_logger.warning(f"OpenAIResponses.parse_generations: empty 'message' content parsed; top-level keys={keys}")
+                res.append(extracted if extracted else "[NO_TEXT_IN_RESPONSE]")
+                continue
+
+            # 3) Legacy/alternate: message at top-level
+            if isinstance(output, dict) and "message" in output:
                 message = output["message"]
                 if isinstance(message, dict) and "content" in message:
-                    res.append(message["content"])
+                    content_value = message["content"]
+                    if isinstance(content_value, list):
+                        texts: List[str] = []
+                        for part in content_value:
+                            if isinstance(part, dict):
+                                if part.get("type") in ("output_text", "text") and isinstance(part.get("text"), str):
+                                    texts.append(part.get("text"))
+                                elif isinstance(part.get("text"), str):
+                                    texts.append(part.get("text"))
+                        res.append("".join(texts) if texts else "[NO_TEXT_IN_MESSAGE]")
+                    elif isinstance(content_value, str):
+                        res.append(content_value)
+                    else:
+                        res.append(str(content_value))
                 else:
-                    res.append("")
+                    keys = list(output.keys())
+                    eval_logger.warning(f"OpenAIResponses.parse_generations: dict with 'message' but missing 'content'; keys={keys}")
+                    res.append("[NO_MESSAGE_CONTENT]")
+                continue
+
+            # 4) Unrecognized shapes
+            if isinstance(output, dict):
+                keys = list(output.keys())
+                eval_logger.warning(f"OpenAIResponses.parse_generations: unrecognized dict shape; keys={keys}")
+                out_list = output.get("output")
+                if isinstance(out_list, list):
+                    texts: List[str] = []
+                    for item in out_list:
+                        if isinstance(item, dict):
+                            txt = item.get("text")
+                            if isinstance(txt, str) and txt:
+                                texts.append(txt)
+                    res.append("".join(texts) if texts else "[UNRECOGNIZED_RESPONSE_SHAPE]")
+                else:
+                    res.append("[UNRECOGNIZED_RESPONSE_SHAPE]")
             else:
-                res.append("")
-        
+                res.append("[INVALID_RESPONSE_TYPE]")
+
         return res
