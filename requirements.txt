@@ -1,1 +1,13 @@
+# LM Evaluation Harness core
 -e .
+
+# FastAPI web framework
+fastapi[standard]==0.116.1
+uvicorn[standard]==0.32.1
+
+# Production server requirements  
+gunicorn==23.0.0
+
+# Additional API dependencies
+python-multipart==0.0.20
+python-dotenv==1.0.1

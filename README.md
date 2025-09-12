@@ -65,6 +65,106 @@ pip install -e .
 
 We also provide a number of optional dependencies for extended functionality. A detailed table is available at the end of this document.
 
+## START SERVICE
+
+This repository includes a FastAPI HTTP service that provides production-ready endpoints for running LM evaluations via HTTP requests. The service supports both local development and production deployment modes.
+
+### Local Development Mode (Port 4000)
+
+For local development and testing, the service runs on `localhost:4000`:
+
+```bash
+# Clone and setup the repository
+git clone --depth 1 https://github.com/EleutherAI/lm-evaluation-harness
+cd lm-evaluation-harness
+
+# Create virtual environment and install dependencies
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+# Start the local service on port 4000
+python3 app.py
+```
+
+The service will be available at:
+- **Health Check**: `http://localhost:4000/health`
+- **Evaluation Endpoint**: `http://localhost:4000/evaluate`
+- **HellaSwag Endpoint**: `http://localhost:4000/hellaswag`
+- **MMLU Endpoint**: `http://localhost:4000/mmlu`
+- **Available Tasks**: `http://localhost:4000/tasks`
+
+### Production Mode (Port 8000)
+
+For production deployment (e.g., on Render.com, Heroku, etc.), the service automatically uses port 8000 and optimizes for production:
+
+```bash
+# Set production environment variables
+export PRODUCTION=true
+export PORT=8000
+
+# Start the production service
+python3 app.py
+```
+
+Or using the render.yaml configuration:
+
+```bash
+# Deploy to Render.com (automatically sets RENDER=true and PORT=8000)
+# The render.yaml file configures the production environment
+```
+
+### API Usage Examples
+
+#### Health Check
+```bash
+curl http://localhost:4000/health
+```
+
+#### Run Evaluation
+```bash
+curl -X POST http://localhost:4000/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model_endpoint": "https://api.openai.com/v1",
+    "model_name": "gpt-3.5-turbo",
+    "api_key": "your-api-key",
+    "tasks": ["hellaswag"],
+    "limit": 5,
+    "batch_size": 1
+  }'
+```
+
+#### HellaSwag Evaluation
+```bash
+curl -X POST http://localhost:4000/hellaswag \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model_endpoint": "https://api.openai.com/v1",
+    "model_name": "gpt-3.5-turbo",
+    "api_key": "your-api-key",
+    "limit": 10
+  }'
+```
+
+### Environment Variables
+
+| Variable | Local Default | Production Default | Description |
+|----------|---------------|-------------------|-------------|
+| `PORT` | 4000 | 8000 | Port number for the HTTP service |
+| `RENDER` | false | true | Indicates Render.com deployment |
+| `PRODUCTION` | false | true | Enables production optimizations |
+| `OPENAI_API_KEY` | - | - | Default OpenAI API key if not provided in requests |
+
+### Service Features
+
+- **OpenAI-Compatible API Support**: Evaluate any model that implements the OpenAI API standard
+- **Multiple Evaluation Tasks**: Support for HellaSwag, MMLU, ARC, GSM8K, and many more
+- **Batch Processing**: Configurable batch sizes for optimal performance
+- **Error Handling**: Comprehensive error responses with detailed logging
+- **Health Monitoring**: Built-in health check endpoints for monitoring
+- **Production Ready**: Optimized configurations for production deployment
+
 ## Basic Usage
 
 ### User Guide
