@@ -1,12 +1,13 @@
 task: swebench_leader
 dataset_name: princeton-nlp/SWE-bench_Verified
-model_name: clean_leader_agent
-model_endpoint: https://api.openai.com/v1/chat/completions
+model_name: anthropic_leader_agent
+model_endpoint: https://api.anthropic.com/v1/messages
 strategy: systematic
 truncation_strategy: ast_llm_compaction
 max_tokens: 16000
 max_workers: 1
 artifact_dir: ./artifacts/swebench_leader
-run_id: clean_run
+run_id: api_run
 use_docker: false  # Set to true for Docker-based evaluation, false for local evaluation
 # task_id will be provided via override at execution time
+# For Hugging Face remote models, use: model_endpoint: "hf_remote:google/gemma-3-12b-it"

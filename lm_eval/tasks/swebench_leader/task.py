@@ -20,12 +20,12 @@ def run_task(cfg: Dict) -> Dict:
     
     cfg keys expected:
       - task_id (e.g., "django__django-11299")
-      - model_endpoint (e.g., "http://localhost:8000/v1/chat/completions")
+      - model_endpoint (e.g., "https://api.anthropic.com/v1/messages" or "hf_remote:google/gemma-3-12b-it")
       - model_name (optional string for tagging results)
       - strategy (default: "systematic")
       - truncation_strategy (default: "ast_llm_compaction")
       - max_tokens (default: 16000)
-      - max_workers (default: 8)
+      - max_workers (default: 1)
       - dataset_name (default: "princeton-nlp/SWE-bench_Verified")
       - artifact_dir (default: "./artifacts/swebench_leader")
       - run_id (default: "leader_agent_proto")
@@ -49,29 +49,26 @@ def run_task(cfg: Dict) -> Dict:
     _ensure_dir(inst_dir)
 
     # 1) Run the appropriate LeaderAgent to generate patch
-    # Check if this is a Hugging Face model
-    if endpoint.startswith("hf:"):
-        model_name = endpoint[3:]  # Remove "hf:" prefix
-        runner_path = Path(__file__).parent / "run_hf_swebench.py"
+    # Check if this is a Hugging Face remote model
+    if endpoint.startswith("hf_remote:"):
+        model_name = endpoint[10:]  # Remove "hf_remote:" prefix
+        runner_path = Path(__file__).parent / "run_hf_remote_swebench.py"
     else:
+        # For API endpoints (Anthropic, OpenAI, etc.)
         runner_path = Path(__file__).parent / "run_clean_swebench.py"
     
     leader_agent_path = Path(__file__).parent
     
-    if endpoint.startswith("hf:"):
-        # For Hugging Face models, use model-name instead of model-endpoint
+    if endpoint.startswith("hf_remote:"):
+        # For Hugging Face remote models, use simplified arguments
         cmd = [
             sys.executable, str(runner_path),
             "--task-id", task_id,
             "--model-name", model_name,
-            "--strategy", strategy,
-            "--truncation-strategy", trunc,
-            "--max-tokens", str(max_toks),
-            "--output_dir_name", "harness",
-            "--leader-agent-path", str(leader_agent_path)
+            "--max-iterations", "3"
         ]
     else:
-        # For API endpoints, use model-endpoint
+        # For API endpoints (Anthropic, OpenAI, etc.), use model-endpoint
         cmd = [
             sys.executable, str(runner_path),
             "--task-id", task_id,
@@ -163,7 +160,7 @@ def run_task(cfg: Dict) -> Dict:
                         "status": "failed",
                         "tests_passed": False,
                         "error": str(e),
-                        "evaluation_method": "local_fallback"
+                        "evaluation_method": "local_evaluation_error"
                     }]
                 }, f, indent=2)
 

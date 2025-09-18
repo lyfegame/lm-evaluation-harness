@@ -26,23 +26,23 @@ HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxxxxxxxx
 python3 -m venv venv
 source venv/bin/activate
 pip install -e .
-pip install swebench datasets docker tqdm jq
+pip install swebench datasets huggingface_hub python-dotenv tqdm jq
 ```
 
-### Option 1: API Endpoint (OpenAI, Anthropic, etc.)
+### Option 1: Hugging Face Remote Inference (Recommended for Cloud)
 
 ```bash
-python3 run_clean_swebench_main.py \
+python3 run_swebench_remote.py \
   --task-id "django__django-11299" \
-  --model-endpoint "https://api.openai.com/v1/chat/completions"
+  --model-name "google/gemma-3-12b-it"
 ```
 
-### Option 2: Hugging Face Model
+### Option 2: API Endpoint (OpenAI, Anthropic, etc.)
 
 ```bash
-python3 run_hf_swebench_main.py \
+python3 run_swebench_remote.py \
   --task-id "django__django-11299" \
-  --model-name "google/gemma-2-2b"
+  --model-endpoint "https://api.anthropic.com/v1/messages"
 ```
 
 ### Option 3: Using the Harness CLI
@@ -107,10 +107,10 @@ artifacts/swebench_leader/
 - **Purpose**: Generates proper unified diff patches from API endpoints
 - **Features**: Patch extraction, error handling, conversation logging
 
-### 2. HuggingFaceLeaderAgent
-- **File**: `lm_eval/tasks/swebench_leader/hf_leader_agent.py`
-- **Purpose**: Generates patches using Hugging Face models directly
-- **Features**: Local model loading, token authentication, device management
+### 2. HuggingFaceRemoteAgent
+- **File**: `lm_eval/tasks/swebench_leader/hf_remote_agent.py`
+- **Purpose**: Generates patches using Hugging Face remote inference API
+- **Features**: Cloud-based inference, no local model loading, memory efficient
 
 ### 3. SWE-bench Task Runner
 - **File**: `lm_eval/tasks/swebench_leader/task.py`
@@ -148,16 +148,10 @@ HF_TOKEN=your_token_here
 
 ## 🧪 Testing
 
-Run the demo to see the clean implementation:
-
-```bash
-python3 demo_clean_swebench.py
-```
-
 ## 📖 Documentation
 
-- **Clean Implementation Guide**: `CLEAN_SWEBENCH_README.md`
-- **Cleanup Summary**: `CLEANUP_SUMMARY.md`
+- **Main Documentation**: This README.md file
+- **Configuration**: `lm_eval/tasks/swebench_leader/config_default.yaml`
 
 ## 🎉 Result
 
@@ -170,26 +164,22 @@ The clean implementation provides:
 
 The system now meets all the premises for a successful SWE-bench evaluation run.
 
-## 🧪 Examples and Testing
+## 🧪 Testing
 
-### Run Examples
+### Quick Test
 ```bash
-# Demo the implementation
-python examples/swebench/demo_clean_swebench.py
+# Test with Hugging Face remote inference
+python run_swebench_remote.py --task-id "django__django-11299" --model-name "google/gemma-3-12b-it"
 
-# Test the implementation
-python examples/swebench/test_clean_swebench.py
-```
-
-### Smoke Test
-```bash
-# Quick test with default configuration
-python scripts/run_swebench_leader.py
+# Test with API endpoint
+python run_swebench_remote.py --task-id "django__django-11299" --model-endpoint "https://api.anthropic.com/v1/messages"
 ```
 
 ## 🧹 What Was Cleaned Up
 
 This implementation removed all legacy code including:
+- Local Hugging Face model loading (`hf_leader_agent.py`, `run_hf_swebench.py`)
+- Legacy clean agent implementations (`clean_leader_agent.py`, `run_clean_swebench.py`)
 - Complex, non-working implementations (`run_real_swebench.py`, `run_local_eval.py`)
 - Multiple overlapping agent implementations (`simple_leader_agent.py`, `real_leader_agent.py`)
 - Custom evaluation logic that didn't follow SWE-bench standards
@@ -197,5 +187,8 @@ This implementation removed all legacy code including:
 - Temporary files (`ignore.txt`, `pile_statistics.json`)
 - Redundant files (`requirements.txt` - replaced by `pyproject.toml`)
 - Virtual environment from repository (moved to `.gitignore`)
+- All test artifacts and execution results
+- Duplicate runners and examples (`examples/swebench/`, `scripts/run_swebench_leader.py`)
+- Multiple main entry points (consolidated to single `run_swebench_remote.py`)
 
 The result is a focused, working solution that achieves the ideal SWE-bench output with a clean project structure.

@@ -30,7 +30,7 @@ class LocalSWEBenchEvaluator:
         This is a simplified evaluation that focuses on:
         1. Patch format validation
         2. Basic syntax checking
-        3. Mock test execution (since we can't run actual repo tests)
+        3. Simulated test execution (since we can't run actual repo tests in this environment)
         """
         
         logger.info(f"Evaluating patch for task: {task_id}")
@@ -159,12 +159,19 @@ class LocalSWEBenchEvaluator:
             task_id = prediction["instance_id"]
             patch_content = prediction["model_patch"]
             
-            # For local evaluation, we'll use mock task data
-            # In a real implementation, you'd load the actual task data
-            task_data = {
-                "instance_id": task_id,
-                "problem_statement": "Mock problem statement for local evaluation"
-            }
+            # Load real task data from SWE-bench dataset
+            from datasets import load_dataset
+            dataset = load_dataset("princeton-nlp/SWE-bench_Verified", split="test")
+            
+            task_data = None
+            for item in dataset:
+                if item["instance_id"] == task_id:
+                    task_data = item
+                    break
+            
+            if not task_data:
+                logger.error(f"Task {task_id} not found in SWE-bench dataset")
+                task_data = {"instance_id": task_id, "problem_statement": "Task not found"}
             
             instance_result = self.evaluate_patch(task_id, patch_content, task_data)
             results["instances"].append(instance_result)
