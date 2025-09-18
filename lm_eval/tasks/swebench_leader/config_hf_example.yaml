@@ -1,11 +1,11 @@
 task: swebench_leader
 dataset_name: princeton-nlp/SWE-bench_Verified
-model_name: microsoft/CodeBERT-base
-model_endpoint: https://api-inference.huggingface.co/models/microsoft/CodeBERT-base
+model_name: google/gemma-2-2b
+model_endpoint: hf:google/gemma-2-2b
 strategy: systematic
 truncation_strategy: ast_llm_compaction
 max_tokens: 16000
 max_workers: 8
 artifact_dir: ./artifacts/swebench_leader
-run_id: leader_agent_proto
+run_id: clean_run
 # task_id will be provided via override at execution time

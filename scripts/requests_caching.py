@@ -22,8 +22,7 @@ eval_logger = logging.getLogger(__name__)
 
 MODULE_DIR = os.path.dirname(os.path.realpath(__file__))
 
-# Used to specify alternate cache path, useful if run in a docker container
-# NOTE raw datasets will break if you try to transfer the cache from your host to a docker image
+# Used to specify alternate cache path
 LM_HARNESS_CACHE_PATH = os.getenv("LM_HARNESS_CACHE_PATH")
 
 
