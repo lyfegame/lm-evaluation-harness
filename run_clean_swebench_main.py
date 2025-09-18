@@ -21,7 +21,7 @@ def main():
     parser.add_argument("--model-endpoint", required=True, help="Model endpoint URL")
     parser.add_argument("--model-name", default="clean_leader_agent", help="Model name for tagging results")
     parser.add_argument("--max-iterations", type=int, default=3, help="Maximum iterations for patch generation")
-    parser.add_argument("--max-workers", type=int, default=8, help="Maximum workers for evaluation")
+    parser.add_argument("--max-workers", type=int, default=1, help="Maximum workers for evaluation")
     parser.add_argument("--artifact-dir", default="./artifacts/swebench_leader", help="Artifact directory")
     parser.add_argument("--run-id", default="clean_run", help="Run ID for this evaluation")
     parser.add_argument("--use-docker", action="store_true", help="Use Docker-based evaluation (default: local evaluation)")

@@ -19,7 +19,7 @@ def main():
     parser.add_argument("--task-id", required=True, help="SWE-bench task ID (e.g., django__django-11299)")
     parser.add_argument("--model-name", required=True, help="Hugging Face model name (e.g., microsoft/DialoGPT-medium)")
     parser.add_argument("--max-iterations", type=int, default=3, help="Maximum iterations for patch generation")
-    parser.add_argument("--max-workers", type=int, default=8, help="Maximum workers for evaluation")
+    parser.add_argument("--max-workers", type=int, default=1, help="Maximum workers for evaluation")
     parser.add_argument("--device", default="auto", help="Device to use (auto, cpu, cuda)")
     parser.add_argument("--artifact-dir", default="./artifacts/swebench_leader", help="Artifact directory")
     parser.add_argument("--run-id", default="hf_run", help="Run ID for this evaluation")

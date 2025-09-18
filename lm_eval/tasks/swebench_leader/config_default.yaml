@@ -5,7 +5,7 @@ model_endpoint: https://api.openai.com/v1/chat/completions
 strategy: systematic
 truncation_strategy: ast_llm_compaction
 max_tokens: 16000
-max_workers: 8
+max_workers: 1
 artifact_dir: ./artifacts/swebench_leader
 run_id: clean_run
 use_docker: false  # Set to true for Docker-based evaluation, false for local evaluation
