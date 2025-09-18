@@ -1,0 +1,42 @@
+services:
+  # Background worker for SWE-bench evaluations
+  - type: worker
+    name: swebench-leader-worker
+    env: docker
+    dockerfilePath: ./Dockerfile.render
+    plan: starter  # or standard/pro for more resources
+    region: oregon  # or your preferred region
+    branch: main  # or your deployment branch
+    buildCommand: echo "Using Dockerfile for build"
+    startCommand: python scripts/run_swebench_leader.py --task-id ${TASK_ID} --max-iterations ${MAX_ITERATIONS:-10}
+    envVars:
+      - key: TASK_ID
+        sync: false  # Set this in Render dashboard
+      - key: MAX_ITERATIONS
+        value: "10"
+      - key: MODEL_ENDPOINT
+        sync: false  # Set your Modal endpoint
+      - key: MODEL_NAME
+        value: "gemma-3-27b-it@modal"
+      - key: STRATEGY
+        value: "systematic"
+      - key: TRUNCATION_STRATEGY
+        value: "ast_llm_compaction"
+      - key: MAX_TOKENS
+        value: "16000"
+      - key: ARTIFACT_DIR
+        value: "/app/artifacts/swebench_leader"
+      - key: RUN_ID
+        value: "render_worker"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PYTHONDONTWRITEBYTECODE
+        value: "1"
+    # Resource limits
+    scaling:
+      minInstances: 0
+      maxInstances: 1
+    # Health check (optional)
+    healthCheckPath: /health
+    # Auto-deploy settings
+    autoDeploy: false  # Set to true for automatic deployments

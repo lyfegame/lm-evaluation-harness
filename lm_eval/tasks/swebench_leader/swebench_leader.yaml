@@ -1,0 +1,2 @@
+task: swebench_leader
+class: lm_eval.tasks.swebench_leader.task.run_task

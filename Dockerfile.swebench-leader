@@ -1,0 +1,62 @@
+# Pre-built Docker image for SWE-bench LeaderAgent
+FROM swebench/sweb.eval.x86_64.django_1776_django-11299:latest
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    wget \
+    build-essential \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python packages for the system
+RUN pip install --no-cache-dir \
+    dill \
+    torch \
+    tqdm \
+    nbformat \
+    requests \
+    transformers \
+    jupyter \
+    nbconvert \
+    rpds-py \
+    chardet \
+    beautifulsoup4 \
+    jupyter_client \
+    aiohttp \
+    psutil
+
+# Create a non-root user for LeaderAgent (handle existing user/group)
+RUN groupadd -g 1000 agentuser || true && \
+    useradd -m -u 1000 -g 1000 -s /bin/bash agentuser || true
+
+# Install packages for the agentuser
+RUN su - agentuser -c "pip install --user --no-cache-dir \
+    dill \
+    torch \
+    tqdm \
+    nbformat \
+    requests \
+    transformers \
+    jupyter \
+    nbconvert \
+    rpds-py \
+    chardet \
+    beautifulsoup4 \
+    jupyter_client \
+    aiohttp \
+    psutil"
+
+# Set working directory
+WORKDIR /testbed
+
+# Add marker file to indicate this is a pre-built image
+RUN touch /.prebuilt_image
+
+# Default command
+CMD ["/bin/bash"]

@@ -1,0 +1,12 @@
+{
+  "instance_id": "django__django-11299",
+  "repo": "django/django",
+  "base_commit": "6866c91b638de5368c18713fa851bfe56253ea55",
+  "docker_image": "swebench/sweb.eval.x86_64.django_1776_django-11299:latest",
+  "model_endpoint": "https://fairies--deploy-checkpoint-9c7df3-9c7d-modelserver-generate.modal.run",
+  "mode": "leader-agent",
+  "prompt_strategy": "systematic",
+  "truncation_strategy": "ast_llm_compaction",
+  "max_tokens": 16000,
+  "problem_statement_length": 3040
+}

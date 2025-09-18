@@ -1,0 +1,47 @@
+# Dockerfile for Render deployment
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    wget \
+    build-essential \
+    python3-dev \
+    sudo \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Docker CLI (needed for SWE-bench evaluation)
+RUN curl -fsSL https://get.docker.com -o get-docker.sh && \
+    sh get-docker.sh && \
+    rm get-docker.sh
+
+# Create working directory
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY pyproject.toml setup.py requirements.txt ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir swebench docker tqdm python-dotenv
+
+# Copy the application code
+COPY . .
+
+# Create artifacts directory
+RUN mkdir -p /app/artifacts/swebench_leader
+
+# Set up permissions
+RUN chmod +x scripts/*.sh
+
+# Expose port (Render may need this)
+EXPOSE 8000
+
+# Default command (will be overridden by render.yaml)
+CMD ["python", "scripts/run_swebench_leader.py", "--help"]

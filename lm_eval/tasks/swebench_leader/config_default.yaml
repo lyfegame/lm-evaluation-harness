@@ -1,0 +1,13 @@
+task: swebench_leader
+dataset_name: princeton-nlp/SWE-bench_Verified
+model_name: gemma-3-27b-it@modal
+model_endpoint: https://fairies--deploy-checkpoint-9c7df3-9c7d-modelserver-generate.modal.run
+strategy: systematic
+truncation_strategy: ast_llm_compaction
+max_tokens: 16000
+max_workers: 8
+artifact_dir: ./artifacts/swebench_leader
+run_id: leader_agent_proto
+# Use pre-built image for faster execution (set to false to use original image)
+use_prebuilt_image: true
+# task_id will be provided via override at execution time
