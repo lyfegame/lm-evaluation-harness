@@ -1,7 +1,0 @@
-{
-  "task_id": "django__django-11299",
-  "model_name": "google/gemma-2-9b-it",
-  "error": "name 'output_dir' is not defined",
-  "timestamp": "2025-09-22T18:55:18.752466",
-  "evaluation_method": "docker_lightweight_failed"
-}

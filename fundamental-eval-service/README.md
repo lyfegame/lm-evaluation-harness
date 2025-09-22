@@ -222,6 +222,7 @@ fundamental-eval-service/
 ├── render.yaml              # Render deployment config
 ├── config.py                # Configuration settings
 ├── routes/
+│   ├── __init__.py          # Routes package
 │   ├── health.py            # Health check endpoints
 │   └── evaluation.py        # SWE-bench evaluation endpoints
 ├── run_evaluation_cli.py    # Complete evaluation CLI tool
@@ -231,11 +232,15 @@ fundamental-eval-service/
 ├── docker-compose.yml       # Docker Compose configuration
 ├── evaluate_local.py        # Local evaluation script
 ├── setup_local.sh           # Setup script for local environment
-└── README.md
+├── artifacts/               # Evaluation artifacts (auto-generated)
+├── results/                 # Evaluation results (auto-generated)
+├── cache/                   # Docker cache (auto-generated)
+└── README.md               # This documentation
 ```
 
 ## 🎯 Key Features
 
+- **Clean Architecture**: Single, focused codebase with no legacy code
 - **Async Background Tasks**: Long-running evaluations don't block the API
 - **Job Tracking**: Monitor evaluation progress and results
 - **Artifact Management**: Automatic cleanup of old results
