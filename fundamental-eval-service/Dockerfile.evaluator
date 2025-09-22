@@ -1,0 +1,30 @@
+# Minimal Docker image for SWE-bench evaluation
+FROM python:3.10-slim
+
+# Install only essential system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    patch \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Set working directory
+WORKDIR /app
+
+# Install minimal SWE-bench dependencies
+RUN pip install --no-cache-dir \
+    swebench \
+    datasets \
+    huggingface-hub
+
+# Copy evaluation script
+COPY evaluate_local.py /app/evaluate_local.py
+
+# Create results directory
+RUN mkdir -p /app/results /app/cache
+
+# Set minimal cache level
+ENV SWEBENCH_CACHE_LEVEL=base
+
+# Run evaluation
+CMD ["python", "evaluate_local.py"]

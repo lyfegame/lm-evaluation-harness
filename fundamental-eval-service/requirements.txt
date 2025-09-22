@@ -9,6 +9,9 @@ transformers
 torch
 huggingface-hub
 
+# SWE-bench package for real evaluation
+swebench
+
 # Additional dependencies
 pydantic
 python-multipart

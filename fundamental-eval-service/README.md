@@ -4,7 +4,21 @@ A web service for running SWE-bench evaluations with remote inference, designed 
 
 ## 🚀 Quick Start
 
-### Local Development
+### **Option 1: Local Docker Evaluation (Recommended)**
+
+```bash
+# Setup local Docker environment
+./setup_local.sh
+
+# Start the service
+source ../venv/bin/activate
+python app.py
+
+# Access the service
+```
+
+### **Option 2: Simple Setup (No Docker)**
+
 ```bash
 # Install dependencies
 pip install -r requirements.txt
@@ -30,6 +44,14 @@ This is a **Web Service** deployment (not Background Worker) because:
 - You want real-time monitoring and progress tracking
 - Better resource management and scalability
 - API endpoints for triggering evaluations
+
+### 🔬 Evaluation Method
+
+The service uses **real Docker-based SWE-bench evaluation**:
+- **Model Inference**: Remote (Hugging Face API) - no local model loading
+- **Evaluation**: Real Docker containers - applies patches and runs actual tests
+- **Accuracy**: 100% accurate results (not simulated)
+- **Requirements**: Docker must be installed and running
 
 ## 🚀 Deployment on Render
 
@@ -186,6 +208,47 @@ The service has been tested locally and is fully functional:
 - **Duration**: ~2.4 seconds
 - **Patch Generated**: ✅ 829 characters
 - **All Endpoints**: ✅ Working correctly
+- **Evaluation Method**: **Real Docker-based evaluation** (not simulated)
+
+## 📊 Results Analysis
+
+### **Analyze All Results**
+```bash
+# View comprehensive analysis of all evaluations
+python analyze_results.py
+```
+
+### **View Individual Result**
+```bash
+# Show detailed information for a specific evaluation
+python analyze_results.py results/django__django-11299_google_gemma-2-9b-it/
+```
+
+### **Results Storage**
+- **Location**: `./results/` directory
+- **Format**: JSON files with detailed metrics
+- **Files per evaluation**:
+  - `summary.json` - Key metrics and results
+  - `predictions.jsonl` - Generated patch
+  - `results.json` - Full SWE-bench results
+  - `error.json` - Error details (if failed)
+
+### **Sample Analysis Output**
+```
+🔍 Analyzing results in: ./results
+============================================================
+📊 Found 3 evaluation results
+
+📋 EVALUATION SUMMARY
+------------------------------------------------------------
+Task ID                   Model               Solve Rate   Duration   
+------------------------------------------------------------
+django__django-11299      gemma-2-9b-it       100.00%      2.4s       
+sympy__sympy-20590        gemma-2-9b-it       0.00%        15.2s      
+pandas__pandas-12345      gemma-2-9b-it       50.00%       8.7s       
+------------------------------------------------------------
+AVERAGE                                           50.00%      8.8s       
+```
 
 ### 🎬 Quick Demo
 

@@ -3,6 +3,7 @@ SWE-bench evaluation endpoints
 """
 import asyncio
 import json
+import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, List, Dict, Any
@@ -215,7 +216,7 @@ async def run_evaluation_task(
         sys.path.insert(0, str(parent_dir))
         
         from lm_eval.tasks.swebench_leader.run_hf_remote_swebench import run_hf_remote_swebench_evaluation
-        from lm_eval.tasks.swebench_leader.local_evaluator import LocalSWEBenchEvaluator
+        from lm_eval.tasks.swebench_leader.task import run_task
         
         # Create timestamped artifact directory
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -227,44 +228,64 @@ async def run_evaluation_task(
         active_jobs[job_id]["status"] = "evaluating"
         active_jobs[job_id]["artifacts_dir"] = str(artifact_dir)
         
-        # Run the evaluation
-        result = run_hf_remote_swebench_evaluation(
+        # Generate patch using Hugging Face remote inference
+        from lm_eval.tasks.swebench_leader.run_hf_remote_swebench import run_hf_remote_swebench_evaluation
+        
+        # Step 1: Generate patch (remote inference)
+        patch_result = run_hf_remote_swebench_evaluation(
             task_id=task_id,
             model_name=model_name,
             max_iterations=max_iterations,
             artifact_dir=str(artifact_dir)
         )
         
-        if result["success"]:
-            # Run local evaluation
-            evaluator = LocalSWEBenchEvaluator(str(artifact_dir))
-            predictions_path = result["predictions_file"]
-            results_data = evaluator.run_evaluation(predictions_path, settings.swebench_dataset)
-            
-            # Save results.json
-            results_json = artifact_dir / "results.json"
-            with open(results_json, 'w') as f:
-                json.dump(results_data, f, indent=2)
-            
-            # Move job to completed
-            completed_jobs[job_id] = {
-                **active_jobs[job_id],
-                "status": "completed",
-                "completed_at": datetime.utcnow().isoformat(),
-                "duration": result.get("duration", 0),
-                "patch_generated": bool(result.get("patch")),
-                "patch_size": len(result.get("patch", "")),
-                "solve_rate": results_data.get("solve_rate", 0.0),
-                "results_json": str(results_json)
-            }
-        else:
-            # Mark as failed
-            completed_jobs[job_id] = {
-                **active_jobs[job_id],
-                "status": "failed",
-                "completed_at": datetime.utcnow().isoformat(),
-                "error": result.get("error", "Unknown error")
-            }
+        if not patch_result["success"]:
+            raise Exception(f"Patch generation failed: {patch_result.get('error', 'Unknown error')}")
+        
+        # Step 2: Run local Docker evaluation
+        patch_content = patch_result.get("patch", "")
+        if not patch_content:
+            raise Exception("No patch generated")
+        
+        # Run local Docker evaluation
+        docker_result = await run_local_docker_evaluation(
+            task_id=task_id,
+            patch_content=patch_content,
+            model_name=model_name
+        )
+        
+        result = {
+            "success": True,
+            "patch": patch_content,
+            "duration": patch_result.get("duration", 0.0),
+            "docker_result": docker_result
+        }
+        
+        # The run_task function handles the complete evaluation pipeline
+        # including patch generation and Docker-based evaluation
+        # Load results from the generated results.json
+        results_json_path = artifact_dir / "results.json"
+        results_data = {}
+        if results_json_path.exists():
+            with open(results_json_path, 'r') as f:
+                results_data = json.load(f)
+        
+        # Move job to completed
+        completed_jobs[job_id] = {
+            "task_id": task_id,
+            "model_name": model_name,
+            "status": "completed",
+            "started_at": active_jobs[job_id]["started_at"],
+            "artifacts_dir": str(artifact_dir),
+            "completed_at": datetime.now().isoformat(),
+            "duration": result.get("duration", 0.0),
+            "patch_generated": bool(result.get("patch")),
+            "patch_size": len(result.get("patch", "")),
+            "solve_rate": results_data.get("solve_rate", 0.0),
+            "results_json": str(results_json_path) if results_json_path.exists() else None,
+            "job_id": job_id,
+            "evaluation_method": "docker_real"  # Mark as real evaluation
+        }
         
         # Remove from active jobs
         del active_jobs[job_id]
@@ -275,7 +296,68 @@ async def run_evaluation_task(
             completed_jobs[job_id] = {
                 **active_jobs[job_id],
                 "status": "failed",
-                "completed_at": datetime.utcnow().isoformat(),
-                "error": str(e)
+                "completed_at": datetime.now().isoformat(),
+                "error": str(e),
+                "evaluation_method": "docker_failed"
             }
             del active_jobs[job_id]
+
+
+async def run_local_docker_evaluation(task_id: str, patch_content: str, model_name: str) -> Dict[str, Any]:
+    """
+    Run lightweight Docker evaluation locally.
+    Results are stored externally for analysis.
+    """
+    try:
+        # Create results directory
+        results_dir = Path(settings.artifacts_dir) / "local_results"
+        results_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Create task-specific directory
+        task_dir = results_dir / f"{task_id}_{model_name.replace('/', '_')}"
+        task_dir.mkdir(exist_ok=True)
+        
+        # Set environment variables for Docker container
+        env_vars = {
+            "TASK_ID": task_id,
+            "PATCH_CONTENT": patch_content,
+            "MODEL_NAME": model_name
+        }
+        
+        # Run Docker container with docker compose
+        cmd = [
+            "docker", "compose", "run", "--rm",
+            "-e", f"TASK_ID={task_id}",
+            "-e", f"PATCH_CONTENT={patch_content}",
+            "-e", f"MODEL_NAME={model_name}",
+            "swebench-evaluator"
+        ]
+        
+        logger.info(f"Running Docker evaluation: {' '.join(cmd)}")
+        
+        # Run the Docker container
+        result = subprocess.run(
+            cmd,
+            cwd=Path(__file__).parent.parent,  # Run from service root
+            capture_output=True,
+            text=True,
+            timeout=1800  # 30 minute timeout
+        )
+        
+        # Check for results
+        summary_file = task_dir / "summary.json"
+        if summary_file.exists():
+            with open(summary_file, 'r') as f:
+                return json.load(f)
+        else:
+            return {
+                "error": "No summary file generated",
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "return_code": result.returncode
+            }
+            
+    except subprocess.TimeoutExpired:
+        return {"error": "Docker evaluation timeout after 30 minutes"}
+    except Exception as e:
+        return {"error": f"Docker evaluation failed: {str(e)}"}

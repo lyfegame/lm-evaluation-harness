@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  swebench-evaluator:
+    build:
+      context: .
+      dockerfile: Dockerfile.evaluator
+    volumes:
+      # Mount results directory to host for analysis
+      - ./results:/app/results
+      # Mount cache directory to host (optional, for faster subsequent runs)
+      - ./cache:/app/cache
+      # Mount Docker socket for Docker-in-Docker (required for SWE-bench evaluation)
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SWEBENCH_CACHE_LEVEL=base  # Minimal caching
+    working_dir: /app
+    # Don't keep container running
+    restart: "no"
+    # Resource limits for lightweight operation
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
