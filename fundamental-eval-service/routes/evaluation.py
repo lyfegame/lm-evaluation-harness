@@ -258,21 +258,26 @@ async def run_evaluation_task(
             model_name=model_name
         )
         
+        # Calculate total duration including Docker evaluation
+        total_duration = patch_result.get("duration", 0.0) + docker_result.get("duration_seconds", 0.0)
+        
         result = {
             "success": True,
             "patch": patch_content,
-            "duration": patch_result.get("duration", 0.0),
+            "duration": total_duration,
             "docker_result": docker_result
         }
         
         # The run_task function handles the complete evaluation pipeline
         # including patch generation and Docker-based evaluation
-        # Load results from the generated results.json
+        # Load results from Docker evaluation
+        results_data = docker_result if not docker_result.get("error") else {}
+        
+        # Also try to load from results.json if it exists
         results_json_path = artifact_dir / "results.json"
-        results_data = {}
         if results_json_path.exists():
             with open(results_json_path, 'r') as f:
-                results_data = json.load(f)
+                results_data.update(json.load(f))
         
         # Move job to completed
         completed_jobs[job_id] = {
