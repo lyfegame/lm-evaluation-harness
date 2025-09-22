@@ -3,6 +3,7 @@ SWE-bench evaluation endpoints
 """
 import asyncio
 import json
+import logging
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -12,6 +13,9 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks, Query
 from pydantic import BaseModel
 
 from config import settings
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -309,11 +313,11 @@ async def run_local_docker_evaluation(task_id: str, patch_content: str, model_na
     Results are stored externally for analysis.
     """
     try:
-        # Create results directory
-        results_dir = Path(settings.artifacts_dir) / "local_results"
+        # Create results directory - align with Docker evaluation script
+        results_dir = Path(settings.artifacts_dir)
         results_dir.mkdir(parents=True, exist_ok=True)
         
-        # Create task-specific directory
+        # Create task-specific directory - Docker script creates this structure
         task_dir = results_dir / f"{task_id}_{model_name.replace('/', '_')}"
         task_dir.mkdir(exist_ok=True)
         
@@ -344,17 +348,25 @@ async def run_local_docker_evaluation(task_id: str, patch_content: str, model_na
             timeout=1800  # 30 minute timeout
         )
         
-        # Check for results
+        # Check for results - Docker creates results in the correct task directory
         summary_file = task_dir / "summary.json"
         if summary_file.exists():
             with open(summary_file, 'r') as f:
                 return json.load(f)
         else:
+            # If summary.json doesn't exist, try to find any summary file in the results directory
+            summary_files = list(task_dir.glob("summary.json"))
+            if summary_files:
+                with open(summary_files[0], 'r') as f:
+                    return json.load(f)
+            
             return {
                 "error": "No summary file generated",
                 "stdout": result.stdout,
                 "stderr": result.stderr,
-                "return_code": result.returncode
+                "return_code": result.returncode,
+                "task_dir": str(task_dir),
+                "summary_file": str(summary_file)
             }
             
     except subprocess.TimeoutExpired:

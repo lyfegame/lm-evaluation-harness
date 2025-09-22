@@ -4,10 +4,10 @@
   "solve_rate": 0.0,
   "num_solved": 0,
   "total_instances": 1,
-  "duration_seconds": 37.108911752700806,
+  "duration_seconds": 38.86780071258545,
   "evaluation_method": "docker_lightweight",
-  "timestamp": "2025-09-22T18:59:45.255731",
-  "results_file": "/app/results/django__django-11299_google_gemma-2-9b-it/google__gemma-2-9b-it.local_1758567548.json",
+  "timestamp": "2025-09-22T20:06:21.334331",
+  "results_file": "/app/results/django__django-11299_google_gemma-2-9b-it/google__gemma-2-9b-it.local_1758571542.json",
   "predictions_file": "/app/results/django__django-11299_google_gemma-2-9b-it/predictions.jsonl",
   "raw_results": {
     "total_instances": 500,

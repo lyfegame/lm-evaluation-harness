@@ -6,8 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile.evaluator
     volumes:
-      # Mount results directory to host for analysis
-      - ./results:/app/results
+      # Mount artifacts directory to host for analysis (aligns with settings.artifacts_dir)
+      - ./artifacts:/app/results
       # Mount cache directory to host (optional, for faster subsequent runs)
       - ./cache:/app/cache
       # Mount Docker socket for Docker-in-Docker (required for SWE-bench evaluation)
