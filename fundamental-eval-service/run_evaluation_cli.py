@@ -7,6 +7,7 @@ This replicates the same functionality as the web API but runs directly from com
 import asyncio
 import json
 import sys
+import argparse
 from pathlib import Path
 from datetime import datetime
 
@@ -144,32 +145,92 @@ async def run_manual_evaluation(task_id: str, model_name: str, max_iterations: i
 
 
 def main():
-    """Main CLI function"""
-    if len(sys.argv) < 3:
-        print("Usage: python run_evaluation_cli.py <task_id> <model_name> [max_iterations]")
-        print()
-        print("Examples:")
-        print("  python run_evaluation_cli.py django__django-11299 google/gemma-2-9b-it")
-        print("  python run_evaluation_cli.py sympy__sympy-11618 google/gemma-2-9b-it 5")
-        print()
-        print("Available tasks (examples):")
-        print("  - django__django-11299")
-        print("  - django__django-15987") 
-        print("  - sympy__sympy-11618")
-        print("  - sympy__sympy-12096")
-        print()
-        print("Available models:")
-        print("  - google/gemma-2-9b-it")
-        print("  - microsoft/DialoGPT-medium")
-        print("  - huggingface/CodeBERTa-small-v1")
+    """Main CLI function with argument parsing"""
+    parser = argparse.ArgumentParser(
+        description="Run complete SWE-bench evaluation (patch generation + Docker evaluation)",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s --task-id django__django-11299 --model google/gemma-2-9b-it
+  %(prog)s --task-id sympy__sympy-11618 --model google/gemma-2-9b-it --max-iterations 5
+  %(prog)s --task-id django__django-11299 --model microsoft/DialoGPT-medium --verbose
+
+Available tasks (examples):
+  - django__django-11299, django__django-15987
+  - sympy__sympy-11618, sympy__sympy-12096
+  - astropy__astropy-12907, matplotlib__matplotlib-13989
+
+Available models:
+  - google/gemma-2-9b-it (recommended)
+  - microsoft/DialoGPT-medium
+  - huggingface/CodeBERTa-small-v1
+        """
+    )
+    
+    # Required arguments
+    parser.add_argument(
+        "--task-id", 
+        required=True,
+        help="SWE-bench task ID (e.g., django__django-11299)"
+    )
+    
+    parser.add_argument(
+        "--model", 
+        required=True,
+        help="Hugging Face model name (e.g., google/gemma-2-9b-it)"
+    )
+    
+    # Optional arguments
+    parser.add_argument(
+        "--max-iterations",
+        type=int,
+        default=3,
+        help="Maximum iterations for patch generation (default: 3)"
+    )
+    
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Enable verbose output"
+    )
+    
+    parser.add_argument(
+        "--output-dir",
+        help="Custom output directory for results (default: ./artifacts)"
+    )
+    
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would be executed without running"
+    )
+    
+    args = parser.parse_args()
+    
+    # Validate arguments
+    if args.max_iterations < 1 or args.max_iterations > 10:
+        print("❌ Error: max-iterations must be between 1 and 10")
         sys.exit(1)
     
-    task_id = sys.argv[1]
-    model_name = sys.argv[2]
-    max_iterations = int(sys.argv[3]) if len(sys.argv) > 3 else 3
+    if args.verbose:
+        print(f"🔧 Configuration:")
+        print(f"   Task ID: {args.task_id}")
+        print(f"   Model: {args.model}")
+        print(f"   Max Iterations: {args.max_iterations}")
+        print(f"   Output Directory: {args.output_dir or './artifacts'}")
+        print(f"   Dry Run: {args.dry_run}")
+        print()
+    
+    if args.dry_run:
+        print("🔍 Dry run mode - would execute:")
+        print(f"   Patch generation: {args.task_id} with {args.model}")
+        print(f"   Docker evaluation: Real SWE-bench harness")
+        print(f"   Max iterations: {args.max_iterations}")
+        print("✅ Dry run completed (no actual evaluation performed)")
+        return
     
     # Run the evaluation
-    asyncio.run(run_manual_evaluation(task_id, model_name, max_iterations))
+    asyncio.run(run_manual_evaluation(args.task_id, args.model, args.max_iterations))
 
 
 if __name__ == "__main__":

@@ -174,6 +174,45 @@ open http://localhost:8000/docs
    - View results when completed
    - Check system health at `/health/detailed`
 
+## 🖥️ CLI Tools
+
+For manual testing and direct evaluation without the web service:
+
+### **Complete Evaluation (Patch Generation + Docker)**
+```bash
+# Basic usage
+python run_evaluation_cli.py --task-id django__django-11299 --model google/gemma-2-9b-it
+
+# With custom parameters
+python run_evaluation_cli.py --task-id sympy__sympy-11618 --model google/gemma-2-9b-it --max-iterations 5 --verbose
+
+# Dry run to see what would be executed
+python run_evaluation_cli.py --task-id django__django-11299 --model google/gemma-2-9b-it --dry-run --verbose
+```
+
+### **Docker Evaluation Only (Faster for Testing)**
+```bash
+# Test Docker setup with built-in test patch
+python run_docker_eval_cli.py --task-id django__django-11299 --model google/gemma-2-9b-it
+
+# Use a custom patch file
+python run_docker_eval_cli.py --task-id django__django-11299 --model google/gemma-2-9b-it --patch-file my_patch.diff
+
+# Use custom patch content directly
+python run_docker_eval_cli.py --task-id django__django-11299 --model google/gemma-2-9b-it --custom-patch "diff --git..."
+
+# Dry run to see what would be executed
+python run_docker_eval_cli.py --task-id django__django-11299 --model google/gemma-2-9b-it --dry-run --verbose
+```
+
+### **CLI Features**
+- ✅ **Explicit parameters**: `--task-id`, `--model`, `--max-iterations`
+- ✅ **Verbose mode**: `--verbose` for detailed output
+- ✅ **Dry run**: `--dry-run` to test without execution
+- ✅ **Custom patches**: Support for patch files and inline content
+- ✅ **Help system**: `--help` for detailed usage information
+- ✅ **Validation**: Input validation and error handling
+
 ## 📁 Project Structure
 
 ```
@@ -185,6 +224,13 @@ fundamental-eval-service/
 ├── routes/
 │   ├── health.py            # Health check endpoints
 │   └── evaluation.py        # SWE-bench evaluation endpoints
+├── run_evaluation_cli.py    # Complete evaluation CLI tool
+├── run_docker_eval_cli.py   # Docker-only evaluation CLI tool
+├── analyze_results.py       # Results analysis tool
+├── Dockerfile.evaluator     # Docker image for SWE-bench
+├── docker-compose.yml       # Docker Compose configuration
+├── evaluate_local.py        # Local evaluation script
+├── setup_local.sh           # Setup script for local environment
 └── README.md
 ```
 

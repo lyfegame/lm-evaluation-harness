@@ -7,6 +7,7 @@ Use this to test Docker evaluation with a known patch.
 import asyncio
 import json
 import sys
+import argparse
 from pathlib import Path
 from datetime import datetime
 
@@ -109,43 +110,134 @@ index 1234567..abcdefg 100644
 
 
 def main():
-    """Main CLI function"""
-    if len(sys.argv) < 3:
-        print("Usage: python run_docker_eval_cli.py <task_id> <model_name> [patch_file]")
-        print()
-        print("Examples:")
-        print("  python run_docker_eval_cli.py django__django-11299 google/gemma-2-9b-it")
-        print("  python run_docker_eval_cli.py django__django-11299 google/gemma-2-9b-it my_patch.diff")
-        print()
-        print("Available tasks (examples):")
-        print("  - django__django-11299")
-        print("  - django__django-15987") 
-        print("  - sympy__sympy-11618")
-        print("  - sympy__sympy-12096")
-        print()
-        print("Available models:")
-        print("  - google/gemma-2-9b-it")
-        print("  - microsoft/DialoGPT-medium")
-        print("  - huggingface/CodeBERTa-small-v1")
+    """Main CLI function with argument parsing"""
+    parser = argparse.ArgumentParser(
+        description="Run Docker evaluation only (faster for testing Docker setup)",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s --task-id django__django-11299 --model google/gemma-2-9b-it
+  %(prog)s --task-id sympy__sympy-11618 --model google/gemma-2-9b-it --patch-file my_patch.diff
+  %(prog)s --task-id django__django-11299 --model microsoft/DialoGPT-medium --verbose
+  %(prog)s --task-id django__django-11299 --model google/gemma-2-9b-it --custom-patch "diff --git..."
+
+Available tasks (examples):
+  - django__django-11299, django__django-15987
+  - sympy__sympy-11618, sympy__sympy-12096
+  - astropy__astropy-12907, matplotlib__matplotlib-13989
+
+Available models:
+  - google/gemma-2-9b-it (recommended)
+  - microsoft/DialoGPT-medium
+  - huggingface/CodeBERTa-small-v1
+
+Note: If no patch is provided, a test patch will be used.
+        """
+    )
+    
+    # Required arguments
+    parser.add_argument(
+        "--task-id", 
+        required=True,
+        help="SWE-bench task ID (e.g., django__django-11299)"
+    )
+    
+    parser.add_argument(
+        "--model", 
+        required=True,
+        help="Model name for evaluation (e.g., google/gemma-2-9b-it)"
+    )
+    
+    # Patch options (mutually exclusive)
+    patch_group = parser.add_mutually_exclusive_group()
+    patch_group.add_argument(
+        "--patch-file",
+        help="Path to patch file (.diff or .patch)"
+    )
+    
+    patch_group.add_argument(
+        "--custom-patch",
+        help="Custom patch content as string"
+    )
+    
+    patch_group.add_argument(
+        "--use-test-patch",
+        action="store_true",
+        help="Use built-in test patch (default if no other patch option)"
+    )
+    
+    # Optional arguments
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Enable verbose output"
+    )
+    
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would be executed without running"
+    )
+    
+    parser.add_argument(
+        "--timeout",
+        type=int,
+        default=300,
+        help="Timeout for Docker evaluation in seconds (default: 300)"
+    )
+    
+    args = parser.parse_args()
+    
+    # Validate arguments
+    if args.timeout < 30 or args.timeout > 1800:
+        print("❌ Error: timeout must be between 30 and 1800 seconds")
         sys.exit(1)
     
-    task_id = sys.argv[1]
-    model_name = sys.argv[2]
+    # Determine patch content
     patch_content = None
     
-    # Load patch from file if provided
-    if len(sys.argv) > 3:
-        patch_file = sys.argv[3]
+    if args.patch_file:
         try:
-            with open(patch_file, 'r') as f:
+            with open(args.patch_file, 'r') as f:
                 patch_content = f.read()
-            print(f"📄 Loaded patch from file: {patch_file}")
+            if args.verbose:
+                print(f"📄 Loaded patch from file: {args.patch_file} ({len(patch_content)} characters)")
         except FileNotFoundError:
-            print(f"❌ Patch file not found: {patch_file}")
+            print(f"❌ Patch file not found: {args.patch_file}")
+            sys.exit(1)
+        except Exception as e:
+            print(f"❌ Error reading patch file: {e}")
             sys.exit(1)
     
+    elif args.custom_patch:
+        patch_content = args.custom_patch
+        if args.verbose:
+            print(f"📄 Using custom patch: {len(patch_content)} characters")
+    
+    else:
+        # Use test patch (default)
+        if args.verbose:
+            print("📄 Using built-in test patch")
+    
+    if args.verbose:
+        print(f"🔧 Configuration:")
+        print(f"   Task ID: {args.task_id}")
+        print(f"   Model: {args.model}")
+        print(f"   Patch Source: {'File' if args.patch_file else 'Custom' if args.custom_patch else 'Test'}")
+        print(f"   Timeout: {args.timeout} seconds")
+        print(f"   Dry Run: {args.dry_run}")
+        print()
+    
+    if args.dry_run:
+        print("🔍 Dry run mode - would execute:")
+        print(f"   Docker evaluation: {args.task_id} with {args.model}")
+        print(f"   Patch: {'From file' if args.patch_file else 'Custom' if args.custom_patch else 'Test patch'}")
+        print(f"   Timeout: {args.timeout} seconds")
+        print("✅ Dry run completed (no actual evaluation performed)")
+        return
+    
     # Run the Docker evaluation
-    asyncio.run(run_docker_evaluation_only(task_id, model_name, patch_content))
+    asyncio.run(run_docker_evaluation_only(args.task_id, args.model, patch_content))
 
 
 if __name__ == "__main__":
