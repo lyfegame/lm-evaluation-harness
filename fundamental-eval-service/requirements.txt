@@ -1,0 +1,15 @@
+# Core web framework
+fastapi
+uvicorn[standard]
+
+# SWE-bench evaluation dependencies
+# lm-eval-harness will be available from parent directory
+datasets
+transformers
+torch
+huggingface-hub
+
+# Additional dependencies
+pydantic
+python-multipart
+psutil

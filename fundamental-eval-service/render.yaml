@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: fundamental-eval-service
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PORT
+        value: 8000
+      - key: RENDER
+        value: true
+      - key: LOG_LEVEL
+        value: INFO
+      - key: DEBUG
+        value: false
+    healthCheckPath: /health
+    autoDeploy: true
+    branch: feature/swebench-remote-execution
