@@ -10,7 +10,7 @@ from typing import Dict, List, Any
 import pandas as pd
 from datetime import datetime
 
-def analyze_results(results_dir: str = "./results"):
+def analyze_results(results_dir: str = "./artifacts"):
     """
     Analyze all evaluation results stored in the results directory.
     """

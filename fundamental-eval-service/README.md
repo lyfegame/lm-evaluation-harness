@@ -272,21 +272,29 @@ python analyze_results.py
 ### **View Individual Result**
 ```bash
 # Show detailed information for a specific evaluation
-python analyze_results.py results/django__django-11299_google_gemma-2-9b-it/
+python analyze_results.py artifacts/django__django-11299_google_gemma-2-9b-it_20250922_170757/
 ```
 
 ### **Results Storage**
-- **Location**: `./results/` directory
+- **Location**: `./artifacts/` directory
 - **Format**: JSON files with detailed metrics
 - **Files per evaluation**:
-  - `summary.json` - Key metrics and results
+  - `complete_results.json` - Full evaluation summary (CLI tool)
   - `predictions.jsonl` - Generated patch
-  - `results.json` - Full SWE-bench results
+  - `summary.json` - Docker evaluation summary
+  - `task_name/evaluation_results.json` - Detailed SWE-bench metrics
+
+### **Important: Results are Stored LOCALLY**
+- ✅ **Results are stored on your LOCAL filesystem** in `./artifacts/`
+- ✅ **NOT inside Docker containers** - results are mounted to your local directory
+- ✅ **Easy access** - you can view, edit, and analyze results directly
+- ✅ **Persistent** - results remain after Docker containers are removed
+- ✅ **Docker volume mount**: `./artifacts:/app/results` ensures local storage
   - `error.json` - Error details (if failed)
 
 ### **Sample Analysis Output**
 ```
-🔍 Analyzing results in: ./results
+🔍 Analyzing results in: ./artifacts
 ============================================================
 📊 Found 3 evaluation results
 
